@@ -107,7 +107,7 @@ def g_live_sniffer(m: imgui, share_data: Share_Data, consola_font):
                 for i, row in enumerate(pak_list):
                     m.table_next_row()
                     m.table_set_column_index(0)
-                    m.text(f"{row['packet_count']}")
+                    m.text(f"{i}")
                     seconds, _ = map(int, row['sniff_timestamp'].split('.'))
                     timestamp = datetime.fromtimestamp(seconds)
                     m.table_set_column_index(1)
@@ -123,7 +123,7 @@ def g_live_sniffer(m: imgui, share_data: Share_Data, consola_font):
                     m.table_set_column_index(6)
                     m.text(f"{row['sport']}->{row['dport']}")
                     m.same_line()
-                    m.selectable(f"##Row{row['packet_count']}",
+                    m.selectable(f"##Row{i}",
                                  selected=share_data.selected_row == row,
                                  flags=imgui.SELECTABLE_ALLOW_ITEM_OVERLAP | imgui.SELECTABLE_SPAN_ALL_COLUMNS)
                     if m.is_item_clicked(0):

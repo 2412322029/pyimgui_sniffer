@@ -2,5 +2,7 @@
 profile_results.prof
 imgui_demo.cpp
 /log/
-imgui.ini
 /.idea
+**/__pycache__/
+*.pcapng
+font/MicrosoftYaHei.ttf
