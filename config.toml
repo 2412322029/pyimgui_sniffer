@@ -1,9 +1,9 @@
 font_size = 30
-show_view = [ [ "Demo", false,], [ "实时捕获", false,], [ "show pcap", true,],]
-windows_pos = [ 333, 329,]
-windows_size = [ 1957, 1099,]
+show_view = [ [ "Demo", false,], [ "实时捕获", true,], [ "show pcap", false,],]
+windows_pos = [ 343, 172,]
+windows_size = [ 2034, 1172,]
 selected = 4
-theme = "dark"
+theme = "light"
 tshark_path = "D:\\soft\\Wireshark\\tshark.exe"
 
 [setting]

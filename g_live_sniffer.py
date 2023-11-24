@@ -1,12 +1,12 @@
+import re
 import shutil
 import threading
 from datetime import datetime
 from tkinter import filedialog
 import imgui
-from pyshark.packet.packet import Packet
-
 from shark.live_sniffer import packet_sniffer
 from shark.data import MAX_SHOW, Share_Data
+from util.logger import logger
 
 
 def g_live_sniffer(m: imgui, share_data: Share_Data, consola_font):
@@ -14,11 +14,12 @@ def g_live_sniffer(m: imgui, share_data: Share_Data, consola_font):
     interface_list = share_data.interface_list
     pak_list = share_data.pak_list
 
-    def display_packet(packet: Packet):
+    def display_packet(packet):
         imgui.push_font(consola_font)
-        for lay in packet.layers:
-            if imgui.tree_node(lay.layer_name):
-                _, _ = imgui.input_text_multiline('layer', str(lay), -1, imgui.INPUT_TEXT_READ_ONLY)
+        for lay in packet["display_packet"]:
+            if imgui.tree_node(lay[0]):
+                _, _ = imgui.input_text_multiline(
+                    'layer', re.compile(r'\033\[[0-9;]+m').sub('', lay[1]), -1, imgui.INPUT_TEXT_READ_ONLY)
                 imgui.tree_pop()
         imgui.pop_font()
 
@@ -33,11 +34,11 @@ def g_live_sniffer(m: imgui, share_data: Share_Data, consola_font):
             )
             if file_path:
                 shutil.move(share_data.temp, file_path)
-                print(f"File moved from {share_data.temp} to {file_path}")
+                logger.error(f"File moved from {share_data.temp} to {file_path}")
         except FileNotFoundError:
-            print(f"File not found: {share_data.temp}")
+            logger.error(f"File not found: {share_data.temp}")
         except PermissionError:
-            print(f"Permission error. Unable to move file.")
+            logger.error(f"Permission error. Unable to move file.")
         pass
 
     flags = imgui.WINDOW_NO_COLLAPSE | imgui.WINDOW_NO_RESIZE | imgui.WINDOW_NO_MOVE
@@ -54,7 +55,7 @@ def g_live_sniffer(m: imgui, share_data: Share_Data, consola_font):
                         share_data.selected = i
                         if share_data.pak_list:
                             share_data.dialog.save_dialog_opened = True
-                            print("save?")
+                            logger.debug("save?")
                             share_data.pak_list = []
                     if is_selected:
                         imgui.set_item_default_focus()
@@ -69,7 +70,7 @@ def g_live_sniffer(m: imgui, share_data: Share_Data, consola_font):
         m.same_line()
         if m.button("开始"):
             if not share_data.sniff_thread or not share_data.sniff_thread.is_alive():  # 不存在sniff线程
-                print(interface_list[share_data.selected])
+                logger.debug(interface_list[share_data.selected])
                 share_data.sniff_thread = threading.Thread(target=packet_sniffer,
                                                            args=(interface_list[share_data.selected].name,
                                                                  pak_list, share_data.stop,
@@ -105,11 +106,8 @@ def g_live_sniffer(m: imgui, share_data: Share_Data, consola_font):
                 m.table_headers_row()
                 for i, row in enumerate(pak_list):
                     m.table_next_row()
-                    if m.is_item_clicked(0):
-                        share_data.selected_row = row['full']
-                        print(f"Clicked on row {row['full'].packet_count}")
                     m.table_set_column_index(0)
-                    m.text(f"{row['full'].packet_count}")
+                    m.text(f"{row['packet_count']}")
                     seconds, _ = map(int, row['sniff_timestamp'].split('.'))
                     timestamp = datetime.fromtimestamp(seconds)
                     m.table_set_column_index(1)
@@ -125,9 +123,11 @@ def g_live_sniffer(m: imgui, share_data: Share_Data, consola_font):
                     m.table_set_column_index(6)
                     m.text(f"{row['sport']}->{row['dport']}")
                     m.same_line()
-                    m.selectable(f"##Row{row['full'].packet_count}",
-                                 selected=share_data.selected_row == row['full'].packet_count,
+                    m.selectable(f"##Row{row['packet_count']}",
+                                 selected=share_data.selected_row == row,
                                  flags=imgui.SELECTABLE_ALLOW_ITEM_OVERLAP | imgui.SELECTABLE_SPAN_ALL_COLUMNS)
+                    if m.is_item_clicked(0):
+                        share_data.selected_row = row
                 if share_data.setting["auto_scroll"]:
                     m.set_scroll_here_y(1.0)
 
@@ -139,4 +139,4 @@ def g_live_sniffer(m: imgui, share_data: Share_Data, consola_font):
         m.text("stop=" + str(share_data.stop[0]))
         m.text(f'auto_scroll:{share_data.setting["auto_scroll"]}')
         if x := share_data.selected_row:
-            m.text(f"selected_row:{x['full'].packet_count}")
+            m.text(f"selected_row:{x['packet_count']}")
