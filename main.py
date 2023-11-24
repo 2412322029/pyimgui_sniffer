@@ -9,6 +9,7 @@ import sys
 from g_live_sniffer import g_live_sniffer
 from g_show_pcap import g_show_pcap
 from shark import data
+from util.logger import logger
 
 main_directory = os.path.dirname(os.path.abspath(__file__))
 
@@ -76,7 +77,7 @@ def impl_glfw_init(share_data):
     window_name = "ImGui/GLFW3"
 
     if not glfw.init():
-        print("Could not initialize OpenGL context")
+        logger.error("Could not initialize OpenGL context")
         sys.exit(1)
 
     glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
@@ -90,11 +91,16 @@ def impl_glfw_init(share_data):
 
     if not window:
         glfw.terminate()
-        print("Could not initialize Window")
+        logger.error("Could not initialize Window")
         sys.exit(1)
 
     return window
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception:
+        logger.error(f"An unhandled exception occurred", exc_info=True)
+    except KeyboardInterrupt as e:
+        logger.error(f"Ctrl c by user")

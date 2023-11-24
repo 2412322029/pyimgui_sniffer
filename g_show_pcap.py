@@ -1,37 +1,45 @@
-import re
-from datetime import datetime
-import imgui
-from shark.data import MAX_SHOW, Share_Data
 from tkinter import filedialog
+import imgui
+from shark.data import Share_Data
+from util.logger import logger
 
 
 def g_show_pcap(m: imgui, share_data: Share_Data, consola_font):
     def display_packet(packet):
         imgui.push_font(consola_font)
-        for lay in packet["display_packet"]:
-            if imgui.tree_node(lay[0]):
-                _, _ = imgui.input_text_multiline(
-                    'layer', re.compile(r'\033\[[0-9;]+m').sub('', lay[1]), -1, imgui.INPUT_TEXT_READ_ONLY)
-                imgui.tree_pop()
+        m.text(f'need to do!')
+        # for lay in packet["full"].layers():
+        #     print(type(lay).__name__, lay.show())
+        #     if imgui.tree_node(str(lay.name)):
+        #         _, _ = imgui.input_text_multiline('layer', str(lay.fields), -1, imgui.INPUT_TEXT_READ_ONLY)
+        #         imgui.tree_pop()
         imgui.pop_font()
 
+    def reload():
+        share_data.file_pak_list = []
+        share_data.get_file_capture(share_data.file_path)
     flags = imgui.WINDOW_NO_COLLAPSE | imgui.WINDOW_NO_RESIZE | imgui.WINDOW_NO_MOVE
     m.set_next_window_size(*share_data.windows_size)
     with m.begin("show pcap", flags=flags):
-        if m.button("Open"):
-            file_path = filedialog.askopenfilename(
-                defaultextension=".pcapng",
-                filetypes=[("pcapng", "*.pcapng"), ("All Files", "*.*")],
-                title="Open File"
-            )
-            if file_path and not share_data.file_opened:
-                share_data.get_file_capture(file_path)
-                share_data.file_opened = True
-        m.same_line()
-        if m.button("Close"):
-            share_data.file_opened = False
-            print("clear file_pak_list")
-            share_data.file_pak_list = []
+        if not share_data.file_loading:
+            if m.button("Open"):
+                share_data.file_path = filedialog.askopenfilename(
+                    defaultextension=".pcapng",
+                    filetypes=[("pcapng", "*.pcapng"), ("All Files", "*.*")],
+                    title="Open File"
+                )
+                if share_data.file_path:
+                    share_data.file_pak_list = []
+                    share_data.get_file_capture(share_data.file_path)
+            m.same_line()
+            if m.button("Clear"):
+                logger.debug("clear file_pak_list")
+                share_data.file_pak_list = []
+            m.same_line()
+            if m.button("Reload"):
+                reload()
+        else:
+            m.text(f"loading...")
         # m.set_window_position(0, 32)
         table_head = ["id", "sniff_time", "src ip/mac", "dst ip/mac", "length", "protocol", "summary"]
         flag_table = imgui.TABLE_RESIZABLE | imgui.TABLE_REORDERABLE | imgui.TABLE_HIDEABLE | \
@@ -50,10 +58,8 @@ def g_show_pcap(m: imgui, share_data: Share_Data, consola_font):
                     m.table_next_row()
                     m.table_set_column_index(0)
                     m.text(f'{i}')
-                    seconds, _ = map(int, row["sniff_timestamp"].split('.'))
-                    timestamp = datetime.fromtimestamp(seconds)
                     m.table_set_column_index(1)
-                    m.text(f'{timestamp.strftime("%m-%d %H:%M:%S")}')
+                    m.text(f'{str(row["sniff_timestamp"])}')
                     m.table_set_column_index(2)
                     m.text(row["src"])
                     m.table_set_column_index(3)
@@ -63,14 +69,14 @@ def g_show_pcap(m: imgui, share_data: Share_Data, consola_font):
                     m.table_set_column_index(5)
                     m.text(f"{row['highest_layer']}")
                     m.table_set_column_index(6)
-                    m.text(f"{row['sport']}->{row['dport']}")
+                    m.text(f"{row['sport']}->{row['dport'], row['summary']}")
                     m.same_line()
-                    m.selectable(f"##Row{i}", selected=share_data.selected_row == row,
+                    m.selectable(f"##Row{i}", selected=share_data.selected_file_row == row,
                                  flags=imgui.SELECTABLE_ALLOW_ITEM_OVERLAP | imgui.SELECTABLE_SPAN_ALL_COLUMNS)
                     if m.is_item_clicked(0):
-                        share_data.selected_row = row
+                        share_data.selected_file_row = row
 
-                        print(f"Clicked on row {i}")
+                        # print(f"Clicked on row {i}")
                 if share_data.setting["auto_scroll"]:
                     m.set_scroll_here_y(1.0)
                 # sort_specs = m.table_get_sort_specs()
@@ -80,9 +86,9 @@ def g_show_pcap(m: imgui, share_data: Share_Data, consola_font):
                 #         share_data.file_pak_list.sort(key=lambda item: str(item))
                 #         print(sort_specs)
         with m.begin_child("Scroll_table", 0, 400, border=True):
-            if share_data.selected_row:
-                display_packet(share_data.selected_row)
+            if share_data.selected_file_row:
+                display_packet(share_data.selected_file_row)
 
-        m.text(f'{len(share_data.file_pak_list)}/{MAX_SHOW}')
+        m.text(f'{len(share_data.file_pak_list)}')
         m.text("stop=" + str(share_data.stop[0]))
         m.text(f'auto_scroll:{share_data.setting["auto_scroll"]}')
