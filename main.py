@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
-from imgui.integrations.glfw import GlfwRenderer
 from OpenGL import GL
 import glfw
-import imgui
 import sys
 from g_live_sniffer import g_live_sniffer
 from g_show_pcap import g_show_pcap
 from shark import data
 from util.logger import logger
-
+import imgui
+from imgui.integrations.glfw import GlfwRenderer
 main_directory = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -21,10 +20,10 @@ def main():
     glfw.set_window_pos(window, *share_data.windows_pos)
     impl = GlfwRenderer(window)
     io = imgui.get_io()
-    chinese_font = io.fonts.add_font_from_file_ttf(os.path.join(main_directory, "c:/Windows/Fonts/msyh.ttc"),
+    chinese_font = io.fonts.add_font_from_file_ttf("c:/Windows/Fonts/msyh.ttc",
                                                    share_data.font_size, None,
                                                    io.fonts.get_glyph_ranges_chinese())
-    consola_font = io.fonts.add_font_from_file_ttf(os.path.join(main_directory, "font/consola.ttf"),
+    consola_font = io.fonts.add_font_from_file_ttf("./font/consola.ttf",
                                                    share_data.font_size, None)
     impl.refresh_font_texture()
     while not glfw.window_should_close(window):

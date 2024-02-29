@@ -6,3 +6,6 @@ imgui_demo.cpp
 **/__pycache__/
 *.pcapng
 font/MicrosoftYaHei.ttf
+/build/
+/dist/
+/tshark/

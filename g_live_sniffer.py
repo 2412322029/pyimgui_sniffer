@@ -1,5 +1,7 @@
+import os
 import re
 import shutil
+import sys
 import threading
 from datetime import datetime
 from tkinter import filedialog
@@ -11,6 +13,9 @@ from util.logger import logger
 
 def g_live_sniffer(m: imgui, share_data: Share_Data, consola_font):
     items = [i.name for i in share_data.interface_list]
+    if len(items) == 0:
+        logger.error('interface_list is empty 无法获取网卡设备，管理员权限打开')
+        sys.exit(0)
     interface_list = share_data.interface_list
     pak_list = share_data.pak_list
 
@@ -47,6 +52,8 @@ def g_live_sniffer(m: imgui, share_data: Share_Data, consola_font):
         m.text("选择网卡: ")
         m.same_line()
         imgui.set_next_item_width(500)
+        if share_data.selected >= len(items) or share_data.selected < 0:
+            share_data.selected = 0
         with m.begin_combo("", items[share_data.selected]) as combo:
             if combo.opened:
                 for i, item in enumerate(items):
@@ -94,7 +101,7 @@ def g_live_sniffer(m: imgui, share_data: Share_Data, consola_font):
         if m.button("重置位置"):
             m.set_window_position(0, 32)
         table_head = ["id", "sniff_time", "src ip/mac", "dst ip/mac", "length", "protocol", "summary"]
-        flag_table = imgui.TABLE_RESIZABLE | imgui.TABLE_REORDERABLE | imgui.TABLE_HIDEABLE |\
+        flag_table = imgui.TABLE_RESIZABLE | imgui.TABLE_REORDERABLE | imgui.TABLE_HIDEABLE | \
                      imgui.TABLE_BORDERS | imgui.TABLE_CONTEXT_MENU_IN_BODY | \
                      imgui.TABLE_SCROLL_X | imgui.TABLE_SCROLL_Y | imgui.TABLE_ROW_BACKGROUND
         with m.begin_child("TableScroll", 0, 500):
