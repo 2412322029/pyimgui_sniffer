@@ -6,10 +6,12 @@ import glfw
 import sys
 from g_live_sniffer import g_live_sniffer
 from g_show_pcap import g_show_pcap
+from g_statistics import g_statistics
 from shark import data
 from util.logger import logger
 import imgui
 from imgui.integrations.glfw import GlfwRenderer
+
 main_directory = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -44,18 +46,24 @@ def main():
         imgui.push_style_color(imgui.COLOR_FRAME_BACKGROUND_HOVERED, 0.57, 0.76, 0.98, 0.40)
         with imgui.begin_main_menu_bar() as main_menu_bar:
             if main_menu_bar.opened:
-                with imgui.begin_menu('View', True) as file_menu:
-                    if file_menu.opened:
-                        for i, m in enumerate(share_data.show_view):
-                            o = share_data.show_view[i]
-                            if imgui.menu_item(o[0], f'{i}', o[1], True)[0]:
-                                share_data.show_view[i][1] = not o[1]
+                for i, m in enumerate(share_data.show_view):
+                    o = share_data.show_view[i]
+                    is_selected = imgui.menu_item(o[0], f'{i}', o[1], True)[0]
+                    if is_selected:
+                        share_data.show_view[i][1] = not o[1]
+                    if imgui.begin_popup_context_item(f'Context{i}'):
+                        imgui.menu_item("Close")
+                        imgui.end_popup()
+
         if share_data.show_view[0][1]:
+            # imgui.set_next_window_focus()
             imgui.show_demo_window()
         if share_data.show_view[1][1]:
             g_live_sniffer(imgui, share_data, consola_font)
         if share_data.show_view[2][1]:
             g_show_pcap(imgui, share_data, consola_font)
+        if share_data.show_view[3][1]:
+            g_statistics(imgui, share_data, consola_font)
         imgui.pop_font()
         imgui.pop_style_color()
 
@@ -73,7 +81,7 @@ def main():
 
 def impl_glfw_init(share_data):
     width, height = share_data.windows_size
-    window_name = "ImGui/GLFW3"
+    window_name = "PyImGui Sniffer"
 
     if not glfw.init():
         logger.error("Could not initialize OpenGL context")

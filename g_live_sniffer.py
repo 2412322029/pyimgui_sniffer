@@ -8,7 +8,7 @@ from tkinter import filedialog
 import imgui
 from shark.live_sniffer import packet_sniffer
 from shark.data import MAX_SHOW, Share_Data
-from util.logger import logger
+from util.logger import logger, log_stream
 
 
 def g_live_sniffer(m: imgui, share_data: Share_Data, consola_font):
@@ -24,7 +24,8 @@ def g_live_sniffer(m: imgui, share_data: Share_Data, consola_font):
         for lay in packet["display_packet"]:
             if imgui.tree_node(lay[0]):
                 _, _ = imgui.input_text_multiline(
-                    'layer', re.compile(r'\033\[[0-9;]+m').sub('', lay[1]), -1, imgui.INPUT_TEXT_READ_ONLY)
+                    'layer', re.compile(r'\033\[[0-9;]+m').sub('', lay[1]), -1,
+                    imgui.INPUT_TEXT_READ_ONLY | imgui.WINDOW_NO_INPUTS)
                 imgui.tree_pop()
         imgui.pop_font()
 
@@ -142,8 +143,22 @@ def g_live_sniffer(m: imgui, share_data: Share_Data, consola_font):
             if share_data.selected_row:
                 display_packet(share_data.selected_row)
 
-        m.text(f'{len(pak_list)}/{MAX_SHOW}')
-        m.text("stop=" + str(share_data.stop[0]))
-        m.text(f'auto_scroll:{share_data.setting["auto_scroll"]}')
-        if x := share_data.selected_row:
-            m.text(f"selected_row:{x['packet_count']}")
+        with m.begin_child("日志", 0, 200, border=True):
+            # 获取当前日志内容
+            log_lines = log_stream.getvalue().splitlines()[-1000:]
+            # 只显示最多1000行日志
+            for line in log_lines:
+                m.text(line)
+            if share_data.log_new_line != log_lines[-1]:
+                m.set_scroll_y(m.get_scroll_max_y())
+            share_data.log_new_line = log_lines[-1]
+
+        with m.begin_child("状态", 0, 30):
+            m.text(f'{len(pak_list)}/{MAX_SHOW}')
+            m.same_line()
+            m.text("stop=" + str(share_data.stop[0]))
+            m.same_line()
+            m.text(f'auto_scroll:{share_data.setting["auto_scroll"]}')
+            m.same_line()
+            if x := share_data.selected_row:
+                m.text(f"selected_row:{x['packet_count']}")

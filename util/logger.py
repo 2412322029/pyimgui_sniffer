@@ -1,5 +1,6 @@
 import logging
 import os
+import io
 import re
 from logging.handlers import TimedRotatingFileHandler
 
@@ -16,5 +17,13 @@ handler.suffix = "%Y-%m-%d"
 extMatch = r"^\d{4}-\d{2}-\d{2}(\.\w+)?$"
 handler.extMatch = re.compile(extMatch, re.ASCII)
 
+# 创建一个内存缓冲区作为日志输出目标
+MAX_LOG_SIZE = 10 * 1024 * 1024  # 10MB
+log_stream = io.StringIO()
+log_stream.truncate(MAX_LOG_SIZE)
+handler = logging.StreamHandler(log_stream)
+
+handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter(FORMAT)
 handler.setFormatter(formatter)
 logger.addHandler(handler)

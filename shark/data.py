@@ -30,10 +30,14 @@ class Share_Data:
         # show pcap
         self.temp = tempfile.mktemp()
         self.file_pak_list = []
+        self.file_pagenum = 0
+        self.file_pagesize = 100
         self.file_path = None
         self.file_loading = False
         self.file_total = 0
         self.selected_file_row = None
+
+        self.log_new_line = None
 
         self.loop = asyncio.new_event_loop()
         self.dialog = ask_for_save()
@@ -109,7 +113,7 @@ class Share_Data:
                 if not self.file_per_thread.is_alive():
                     self.stop_file_per = False
                     break
-        logger.debug("before close window, stop sniff thread [end]")
+        logger.debug("before close window, stop thread [end]")
         if os.path.isfile(self.temp):
             os.remove(self.temp)
             logger.debug(f"remove temp file from {self.temp}")

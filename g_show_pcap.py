@@ -1,28 +1,35 @@
+from pprint import pprint
 from tkinter import filedialog
 import imgui
 from shark.data import Share_Data
-from util.logger import logger
+from util.logger import logger, log_stream
 
 
 def g_show_pcap(m: imgui, share_data: Share_Data, consola_font):
     def display_packet(packet):
         imgui.push_font(consola_font)
-        m.text(f'need to do!')
-        # for lay in packet["full"].layers():
-        #     print(type(lay).__name__, lay.show())
-        #     if imgui.tree_node(str(lay.name)):
-        #         _, _ = imgui.input_text_multiline('layer', str(lay.fields), -1, imgui.INPUT_TEXT_READ_ONLY)
-        #         imgui.tree_pop()
+        for lay in packet["full"].layers():
+            if imgui.tree_node(str(lay.name)):
+                content = ""
+                for field in lay.fields_desc:
+                    field_name = field.name
+                    field_value = getattr(lay, field_name)
+                    content += f"{field_name}: {field_value}\n"
+                _, _ = imgui.input_text_multiline('layer', content, -1, imgui.INPUT_TEXT_READ_ONLY)
+                imgui.tree_pop()
         imgui.pop_font()
 
     def reload():
         share_data.file_pak_list = []
         share_data.get_file_capture(share_data.file_path)
+        share_data.file_pagenum = 0
+
     flags = imgui.WINDOW_NO_COLLAPSE | imgui.WINDOW_NO_RESIZE | imgui.WINDOW_NO_MOVE
     m.set_next_window_size(*share_data.windows_size)
     with m.begin("show pcap", flags=flags):
         if not share_data.file_loading:
-            if m.button("Open"):
+            if m.button("打开文件"):
+                share_data.file_pagenum = 0
                 share_data.file_path = filedialog.askopenfilename(
                     defaultextension=".pcapng",
                     filetypes=[("pcapng", "*.pcapng"), ("All Files", "*.*")],
@@ -32,12 +39,26 @@ def g_show_pcap(m: imgui, share_data: Share_Data, consola_font):
                     share_data.file_pak_list = []
                     share_data.get_file_capture(share_data.file_path)
             m.same_line()
-            if m.button("Clear"):
+            if m.button("清除"):
                 logger.debug("clear file_pak_list")
                 share_data.file_pak_list = []
-            m.same_line()
-            if m.button("Reload"):
-                reload()
+                share_data.file_path = None
+            if share_data.file_path:
+                m.same_line()
+                if m.button("重新加载"):
+                    reload()
+                m.same_line()
+                m.text(share_data.file_path)
+                # m.same_line()
+                m.push_item_width(200)
+                m.same_line(m.get_window_width() - m.calc_text_size(
+                    "page").x - m.get_style().item_spacing.x)
+                m.set_cursor_pos_x(m.get_cursor_pos_x() - m.get_style().item_spacing.x-200)
+                ch, p = m.input_int("", share_data.file_pagenum)
+                if ch and 0 <= p < len(share_data.file_pak_list) / share_data.file_pagesize:
+                    share_data.file_pagenum = p
+                m.pop_item_width()
+
         else:
             m.text(f"loading...")
         # m.set_window_position(0, 32)
@@ -54,10 +75,12 @@ def g_show_pcap(m: imgui, share_data: Share_Data, consola_font):
                 for i in range(len(table_head)):
                     m.table_setup_column(table_head[i])
                 m.table_headers_row()
-                for i, row in enumerate(share_data.file_pak_list, start=1):
+                for i, row in enumerate(share_data.file_pak_list
+                                        [share_data.file_pagenum * share_data.file_pagesize:
+                                        (share_data.file_pagenum + 1) * share_data.file_pagesize]):
                     m.table_next_row()
                     m.table_set_column_index(0)
-                    m.text(f'{i}')
+                    m.text(f'{i + share_data.file_pagesize * share_data.file_pagenum}')
                     m.table_set_column_index(1)
                     m.text(f'{str(row["sniff_timestamp"])}')
                     m.table_set_column_index(2)
@@ -89,6 +112,18 @@ def g_show_pcap(m: imgui, share_data: Share_Data, consola_font):
             if share_data.selected_file_row:
                 display_packet(share_data.selected_file_row)
 
-        m.text(f'{len(share_data.file_pak_list)}')
-        m.text("stop=" + str(share_data.stop[0]))
-        m.text(f'auto_scroll:{share_data.setting["auto_scroll"]}')
+        with m.begin_child("日志", 0, 200, border=True):
+            # 获取当前日志内容
+            log_lines = log_stream.getvalue().splitlines()[-1000:]
+            # 只显示最多1000行日志
+            for line in log_lines:
+                m.text(line)
+            if share_data.log_new_line != log_lines[-1]:
+                m.set_scroll_y(m.get_scroll_max_y())
+            share_data.log_new_line = log_lines[-1]
+        with m.begin_child("状态", 0, 30):
+            m.text(f'{len(share_data.file_pak_list)}')
+            m.same_line()
+            m.text("stop=" + str(share_data.stop[0]))
+            m.same_line()
+            m.text(f'auto_scroll:{share_data.setting["auto_scroll"]}')
