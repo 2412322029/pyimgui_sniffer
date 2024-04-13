@@ -1,4 +1,5 @@
 import asyncio
+import os.path
 import tomllib
 import imgui
 import toml
@@ -12,7 +13,7 @@ MAX_SHOW = 5000
 
 
 class Share_Data:
-    def __init__(self):
+    def __init__(self,main_directory):
         self.stop_file_per = False
         self.windows_size = [2560, 1440]
         self.windows_pos = [0, 50]
@@ -38,6 +39,8 @@ class Share_Data:
         self.selected_file_row = None
 
         self.log_new_line = None
+        self.pcap_file: PacketList | None = None
+        self.result_image_path = os.path.join(main_directory,"output/show.png")
 
         self.loop = asyncio.new_event_loop()
         self.dialog = ask_for_save()
@@ -48,7 +51,8 @@ class Share_Data:
         self.show_view = [
             ['Demo', False],
             ['实时捕获', False],
-            ['show pcap', False]
+            ['打开 pcap', False],
+            ['统计', False]
         ]
         self.load_config()
         self.set_style()
@@ -63,6 +67,7 @@ class Share_Data:
                     self.loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(self.loop)
                 plist = rdpcap(p)
+                self.pcap_file = plist
                 self.file_total = len(plist)
                 for i in plist:
                     if not self.stop_file_per:
@@ -72,10 +77,10 @@ class Share_Data:
                 self.file_loading = False
                 self.loop.stop()
                 self.loop.close()
-            except Exception:
-                logger.error(f"Exception in thread {threading.current_thread().name}", exc_info=True)
+            except Exception as e:
+                logger.error(f"Exception in thread {threading.current_thread().name}:\n{e}", exc_info=True)
 
-        self.file_per_thread = threading.Thread(target=file_capture, args=(path,))
+        self.file_per_thread = threading.Thread(target=file_capture, args=(path,), daemon=True)
         self.file_per_thread.start()
 
     def save_config(self):
@@ -94,10 +99,13 @@ class Share_Data:
         logger.info("save config")
 
     def load_config(self):
-        config_data = tomllib.load(open("config.toml", "rb"))
-        for key, value in config_data.items():
-            setattr(self, key, value)
-        logger.info("load config")
+        if os.path.exists("config.toml"):
+            config_data = tomllib.load(open("config.toml", "rb"))
+            for key, value in config_data.items():
+                setattr(self, key, value)
+            logger.info("load config")
+        else:
+            logger.error("config not found")
 
     def before_close(self):
         logger.debug("before close window, stop thread [start]")
@@ -114,10 +122,17 @@ class Share_Data:
                     self.stop_file_per = False
                     break
         logger.debug("before close window, stop thread [end]")
-        if os.path.isfile(self.temp):
-            os.remove(self.temp)
-            logger.debug(f"remove temp file from {self.temp}")
+        self.remove_temp_file([
+            self.temp,
+        ])
         self.save_config()
+
+    @staticmethod
+    def remove_temp_file(files):
+        for f in files:
+            if os.path.isfile(f):
+                os.remove(f)
+                logger.debug(f"remove temp file from {f}")
 
     def set_style(self):
         if self.theme == "light":

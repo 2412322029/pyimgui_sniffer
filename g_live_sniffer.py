@@ -9,6 +9,7 @@ import imgui
 from shark.live_sniffer import packet_sniffer
 from shark.data import MAX_SHOW, Share_Data
 from util.logger import logger, log_stream
+from util.show_log import show_log
 
 
 def g_live_sniffer(m: imgui, share_data: Share_Data, consola_font):
@@ -47,7 +48,7 @@ def g_live_sniffer(m: imgui, share_data: Share_Data, consola_font):
             logger.error(f"Permission error. Unable to move file.")
         pass
 
-    flags = imgui.WINDOW_NO_COLLAPSE | imgui.WINDOW_NO_RESIZE | imgui.WINDOW_NO_MOVE
+    flags = imgui.WINDOW_NO_COLLAPSE | imgui.WINDOW_NO_RESIZE | imgui.WINDOW_NO_MOVE | imgui.WINDOW_NO_BRING_TO_FRONT_ON_FOCUS
     m.set_next_window_size(*share_data.windows_size)
     with m.begin("实时捕获", flags=flags):
         m.text("选择网卡: ")
@@ -143,15 +144,7 @@ def g_live_sniffer(m: imgui, share_data: Share_Data, consola_font):
             if share_data.selected_row:
                 display_packet(share_data.selected_row)
 
-        with m.begin_child("日志", 0, 200, border=True):
-            # 获取当前日志内容
-            log_lines = log_stream.getvalue().splitlines()[-1000:]
-            # 只显示最多1000行日志
-            for line in log_lines:
-                m.text(line)
-            if share_data.log_new_line != log_lines[-1]:
-                m.set_scroll_y(m.get_scroll_max_y())
-            share_data.log_new_line = log_lines[-1]
+        show_log(m, share_data)
 
         with m.begin_child("状态", 0, 30):
             m.text(f'{len(pak_list)}/{MAX_SHOW}')

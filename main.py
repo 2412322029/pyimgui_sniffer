@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
-from OpenGL import GL
+from OpenGL.GL import *
 import glfw
 import sys
-from g_live_sniffer import g_live_sniffer
-from g_show_pcap import g_show_pcap
-from g_statistics import g_statistics
+from menu import menu
 from shark import data
 from util.logger import logger
 import imgui
@@ -17,7 +15,7 @@ main_directory = os.path.dirname(os.path.abspath(__file__))
 
 def main():
     imgui.create_context()
-    share_data = data.Share_Data()
+    share_data = data.Share_Data(main_directory)
     window = impl_glfw_init(share_data)
     glfw.set_window_pos(window, *share_data.windows_pos)
     impl = GlfwRenderer(window)
@@ -44,31 +42,13 @@ def main():
         glfw.swap_interval(1)
         imgui.push_font(chinese_font)
         imgui.push_style_color(imgui.COLOR_FRAME_BACKGROUND_HOVERED, 0.57, 0.76, 0.98, 0.40)
-        with imgui.begin_main_menu_bar() as main_menu_bar:
-            if main_menu_bar.opened:
-                for i, m in enumerate(share_data.show_view):
-                    o = share_data.show_view[i]
-                    is_selected = imgui.menu_item(o[0], f'{i}', o[1], True)[0]
-                    if is_selected:
-                        share_data.show_view[i][1] = not o[1]
-                    if imgui.begin_popup_context_item(f'Context{i}'):
-                        imgui.menu_item("Close")
-                        imgui.end_popup()
-
-        if share_data.show_view[0][1]:
-            # imgui.set_next_window_focus()
-            imgui.show_demo_window()
-        if share_data.show_view[1][1]:
-            g_live_sniffer(imgui, share_data, consola_font)
-        if share_data.show_view[2][1]:
-            g_show_pcap(imgui, share_data, consola_font)
-        if share_data.show_view[3][1]:
-            g_statistics(imgui, share_data, consola_font)
+        if not glfw.get_window_attrib(window, glfw.ICONIFIED):
+            menu(share_data, consola_font)  # 菜单
         imgui.pop_font()
         imgui.pop_style_color()
 
-        GL.glClearColor(1.0, 1.0, 1.0, 1)
-        GL.glClear(GL.GL_COLOR_BUFFER_BIT)
+        glClearColor(1.0, 1.0, 1.0, 1)
+        glClear(GL_COLOR_BUFFER_BIT)
 
         imgui.render()
         impl.render(imgui.get_draw_data())
@@ -91,7 +71,7 @@ def impl_glfw_init(share_data):
     glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
     glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
 
-    glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, GL.GL_TRUE)
+    glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, GL_TRUE)
 
     window = glfw.create_window(int(width), int(height), window_name, None, None)
     glfw.make_context_current(window)

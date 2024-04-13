@@ -1,7 +1,7 @@
 font_size = 30
-show_view = [ [ "Demo", true,], [ "实时捕获", true,], [ "打开 pcap", true,], [ "统计", false,],]
-windows_pos = [ -182, 195,]
-windows_size = [ 2560, 1370,]
+show_view = [ [ "Demo", false,], [ "实时捕获", false,], [ "打开 pcap", true,], [ "统计", true,],]
+windows_pos = [ 255, 125,]
+windows_size = [ 2139, 1271,]
 selected = 3
 theme = "light"
 tshark_path = "./tshark/tshark.exe"

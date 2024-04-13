@@ -28,6 +28,6 @@ def packet_sniffer(name, pak_list: list, stop_flag, share_data: Share_Data):
                 share_data.loop.close()
                 break
         logger.debug("packet_sniffer end... ")
-    except Exception:
-        logger.error(f"Exception in thread {threading.current_thread().name}", exc_info=True)
+    except Exception as e:
+        logger.error(f"Exception in thread {threading.current_thread().name}:\n{e}", exc_info=True)
 
