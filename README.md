@@ -24,3 +24,8 @@ Microsoft Visual C++ 14.0 or greater is required.
 Get it with "Microsoft C++ Build Tools": https://visualstudio.microsoft.com/visual-cpp-build-tools/
 
 pip install -r requirement.txt
+
+# 相关库
+PyImGui库：PyImGui是一个Python绑定到C++ ImGui库的项目，而imgui是一个轻量级的图形用户界面库，ImGui的核心理念是“所见即所得”的UI设计，适用于创建简单而高效的用户界面。它提供了直观的界面元素和交互方式，用户可以方便地与流量包分析软件进行交互和操作。
+scapy库：Scapy是一个基于Python编写的交互式数据包处理程序，使用Python解释器作为命令面板。可以用来发送、嗅探、解析和伪造网络数据包，常常被用于网络攻击和测试。Scapy可以实现扫描、路由跟踪、探测、单元测试、攻击和发现网络等传统功能。
+pyshark库：pyshark是一个基于Tshark的Python库，用于解析和分析pcap文件。Pyshark是tshark的python包装，也就是说其底层是调用tshark实现功能，使用它从pcap文件中读取和处理数据包转换成python对象，并进行进一步的处理和分析。
