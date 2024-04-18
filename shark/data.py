@@ -6,6 +6,8 @@ import toml
 from scapy.all import *
 from scapy.layers.inet import IP, TCP, UDP
 from scapy.layers.l2 import Ether
+
+from shark.statistics import clear_img
 from util.ask_for_save import ask_for_save
 from util.logger import logger
 

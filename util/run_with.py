@@ -18,7 +18,9 @@ def flag_controlled(enabled=True):
         def wrapper(*args, **kwargs):
             if enabled:
                 return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
@@ -29,7 +31,20 @@ def run_in_thread(func):
                 func(*args, **kwargs)
             except Exception as e:
                 logger.error(f"An error occurred in thread {threading.current_thread().name}: {str(e)}")
+
         thread = threading.Thread(target=target, args=args, kwargs=kwargs)
         thread.daemon = True  # 设置线程为守护线程
         thread.start()
+
     return wrapper
+
+
+if __name__ == '__main__':
+    @run_once
+    def do():
+        print("do")
+
+
+    do()
+    print()
+    do()

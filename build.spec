@@ -57,6 +57,7 @@ coll = COLLECT(
 my_files = ['config.toml',
             'g_live_sniffer.py',
             'g_show_pcap.py',
+            'g_statistics.py',
             'imgui.ini','glfw.dll']
 my_folders = ['shark', 'util', 'font','tshark']
 dest_root = join('dist', basename(coll.name))

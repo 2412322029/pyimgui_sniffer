@@ -41,7 +41,7 @@ def g_live_sniffer(m: imgui, share_data: Share_Data, consola_font):
             )
             if file_path:
                 shutil.move(share_data.temp, file_path)
-                logger.error(f"File moved from {share_data.temp} to {file_path}")
+                logger.info(f"File moved from {share_data.temp} to {file_path}")
         except FileNotFoundError:
             logger.error(f"File not found: {share_data.temp}")
         except PermissionError:

@@ -9,7 +9,7 @@ log_stream = io.StringIO()
 # 创建一个内存缓冲区作为日志输出目标
 
 FORMAT = "%(asctime)-15s [%(threadName)s] [%(levelname)s] [%(pathname)s:%(lineno)d] %(message)s"
-logging.basicConfig(format=FORMAT, level=logging.INFO)
+logging.basicConfig(format=FORMAT, level=logging.DEBUG)
 logger = logging.getLogger("main")
 if not os.path.exists("log"):
     os.makedirs("log")
